@@ -7,6 +7,7 @@ const $ = Rx.Observable;
 // threejs
 const THREE = require('three');
 window.THREE = window.THREE || THREE;
+require('three/examples/js/effects/OutlineEffect.js');
 
 // const colladaLoader = require('../../util/three/loader/collada.js');
 
@@ -52,7 +53,7 @@ const init = ({canvas, state}) => {
 	// scene.add(new THREE.HemisphereLight(0x443333, 0x111122));
 	// scene.add(new THREE.PointLight(0xffffff, 0.3));
 	let dirLight = new THREE.DirectionalLight(0xffffff, 1);
-	dirLight.color.setHSL(0.1, 0, 0.1);
+	dirLight.color.setHSL(0.1, 0, 0.5);
 	dirLight.position.set(0.5, 1.5, -1);
 	dirLight.position.multiplyScalar(30);
 	dirLight.castShadow = true;
@@ -74,7 +75,19 @@ const init = ({canvas, state}) => {
 	addGround(scene);
 
 	let sphereGeometry = new THREE.SphereGeometry(1, 128, 128);
-	let material = new THREE.MeshNormalMaterial();
+	const alpha = 0.7;
+	const beta = 0.3;
+	const gamma = 1;
+	let specularColor = new THREE.Color(beta * 0.2, beta * 0.2, beta * 0.2);
+	let specularShininess = Math.pow(2, alpha * 10);
+	let diffuseColor = new THREE.Color().setHSL(alpha, 0.5, gamma * 0.5 + 0.1).multiplyScalar(1 - beta * 0.2);
+	let material = new THREE.MeshToonMaterial({
+		color: diffuseColor,
+		specular: specularColor,
+		reflectivity: beta,
+		shininess: specularShininess
+	});
+	// let material = new THREE.MeshNormalMaterial();
 	let sphere = new THREE.Mesh(sphereGeometry, material);
 	scene.add(sphere);
 
@@ -84,10 +97,12 @@ const init = ({canvas, state}) => {
 	renderer.shadowMap.enabled = true;
 	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
+	let effect = new THREE.OutlineEffect(renderer);
+
 	canvas.innerHTML = '';
 	canvas.appendChild(renderer.domElement);
 
-	return {scene, light: dirLight, renderer, camera, canvas: renderer.domElement, sphere};
+	return {scene, light: dirLight, renderer, camera, canvas: renderer.domElement, sphere, effect};
 };
 
 function Grad(x, y, z) {
@@ -194,12 +209,12 @@ const perlin3 = (x, y, z) => {
 	v);
 };
 
-const render = ({sphere, scene, camera, renderer, state, character, mixer, acts, guards}) => {
+const render = ({sphere, scene, camera, renderer, state, character, mixer, acts, guards, effect}) => {
 	// console.log(items);
 	if (sphere) {
 		// items[0].rotation.z += 0.01;
 		// plane.rotation.z += 0.001;
-		var time = performance.now() * 0.001;
+		var time = performance.now() * 0.0007;
 		var k = 3;
 		for (var i = 0; i < sphere.geometry.vertices.length; i++) {
 			var p = sphere.geometry.vertices[i];
@@ -215,7 +230,8 @@ const render = ({sphere, scene, camera, renderer, state, character, mixer, acts,
 
 	renderer.setSize(state.viewport.screen.width, state.viewport.screen.height);
 	// renderer.setFaceCulling(0);
-	renderer.render(scene, camera);
+	// renderer.render(scene, camera);
+	effect.render(scene, camera);
 };
 
 let unhook = () => {};
