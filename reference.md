@@ -1,0 +1,4 @@
+- https://threejs.org/examples/#webgl_materials_variations_toon
+- https://steemit.com/utopian-io/@clayjohn/learning-3d-graphics-with-three-js-or-dynamic-geometry
+- https://stemkoski.github.io/Three.js/Metaballs.html
+- https://stemkoski.github.io/Three.js/
