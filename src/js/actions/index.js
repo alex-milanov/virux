@@ -7,7 +7,7 @@ const {obj, arr} = require('iblokz-data');
 // initial
 const initial = {
 	camera: {
-		distance: 10,
+		distance: 70,
 		range: {
 			h: 360,
 			hOffset: -180,

@@ -17,6 +17,9 @@ const state$ = new Rx.BehaviorSubject();
 // services
 let scene = require('./services/scene');
 let viewport = require('./services/viewport.js');
+// game
+let game = require('./services/game');
+actions = app.attach(actions, 'game', game.actions);
 
 // hot reloading
 if (module.hot) {
@@ -48,6 +51,14 @@ if (module.hot) {
 			actions.stream.onNext(state => state);
 		});
 	});
+	// game
+	module.hot.accept("./services/game", function() {
+		game.unhook();
+		game = require('./services/game');
+		actions = app.attach(actions, 'game', game.actions);
+		game.hook({state$, actions});
+		actions.ping();
+	});
 } else {
 	actions$ = actions.stream;
 }
@@ -67,6 +78,7 @@ actions$
 // services
 scene.hook({state$, actions});
 viewport.hook({state$, actions});
+game.hook({state$, actions});
 
 // state -> ui
 const ui$ = state$.map(state => ui({state, actions}));
