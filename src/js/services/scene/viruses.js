@@ -13,7 +13,7 @@ const {perlin3} = require('../../util/perlin.js');
 
 const create = (scene, pos, cell) => {
 	console.log('creating', pos, cell);
-	let sphereGeometry = new THREE.SphereGeometry(8, 64, 64);
+	let sphereGeometry = new THREE.SphereGeometry(8, 32, 32);
 	const alpha = 0.3; // cell.side === 0 ? 0 : 1;
 	const beta = 0.3;
 	const gamma = 1;
@@ -72,7 +72,7 @@ const render = ({state, scene, viruses}) => {
 		(pos, virus) => {
 			const cell = state.game.grid[pos.y][pos.x];
 			if (virus instanceof THREE.Mesh) {
-				var time = performance.now() * 0.0007;
+				var time = performance.now() * 0.0014;
 				var k = 3;
 				for (var i = 0; i < virus.geometry.vertices.length; i++) {
 					var p = virus.geometry.vertices[i];
