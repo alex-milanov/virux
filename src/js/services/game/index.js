@@ -16,7 +16,9 @@ const initial = {
 			side: 0,
 			level: 1,
 			status: 'idle',
-			frame: 0
+			frame: 0,
+			speed: 0.0001,
+			direction: 1
 		}, {}, {}, {}, {}, {}, {}, {}],
 		[{}, {}, {}, {}, {}, {}, {}, {}],
 		[{}, {}, {}, {}, {}, {}, {}, {}],
@@ -28,7 +30,9 @@ const initial = {
 			side: 1,
 			level: 1,
 			status: 'idle',
-			frame: 0
+			frame: 0,
+			speed: 0.0002,
+			direction: 1
 		}]
 	]
 };
@@ -67,12 +71,13 @@ const getArea = (grid, pos, radius = 1) => fn.pipe(
 )();
 
 const maxLevel = 8;
+const frameCount = 16;
 
 const updateStatus = (cell, pos, area, targets) => {
-	let status = 'idle';
+	let status = cell.status;
 	let target = false;
 	let level = cell.level;
-	let frame = 0;
+	let frame = cell.frame;
 	let emptyCells = filter(area, (p, c) => c !== false && c.side === undefined
 		&& !targets.find(({pos}) => pos.x === p.x && pos.y === p.y)
 	);
@@ -82,21 +87,19 @@ const updateStatus = (cell, pos, area, targets) => {
 	// console.log(area, emptyCells, enemyCells, targets);
 	switch (cell.status) {
 		case 'grow':
-			level++;
+			if (frame === frameCount - 1 && level < maxLevel) level++;
 			break;
 		case 'idle':
 			// if odd grow
-			if ((cell.level % 2) === 1) {
-				status = 'grow';
-			} else {
-				if (emptyCells.length > 0) {
+			if (level < maxLevel) {
+				if ((cell.level % 2) === 1 || emptyCells.length === 0 || Math.floor(Math.random() * 10) > 6) {
+					status = 'grow';
+				} else {
 					status = 'split';
 					level = cell.level / 2;
 					target = random(emptyCells).pos;
 					target.x += pos.x - (area.length - 1) / 2;
 					target.y += pos.y - (area.length - 1) / 2;
-				} else {
-					status = 'idle';
 				}
 			}
 			break;
@@ -104,13 +107,12 @@ const updateStatus = (cell, pos, area, targets) => {
 			// status = 'idle';
 			break;
 	}
-	return {
-		side: cell.side,
-		status,
+	return Object.assign({}, cell, {
+		status: (frame === frameCount - 1) ? 'idle' : status,
 		level,
 		target,
-		frame
-	};
+		frame: status !== 'idle' && frame < (frameCount - 1) ? frame + 1 : 0
+	});
 };
 
 // const loop = grid => {
@@ -136,15 +138,20 @@ const loop = state => {
 		if (cell.side !== undefined && cell.side === side) {
 			let newCell = updateStatus(cell, pos, getArea(grid, pos), targets);
 			// console.log(cell, newCell);
-			if (newCell.target) targets.push({pos: newCell.target, cell: newCell});
+			if (newCell.target) targets.push({pos: newCell.target, cell: newCell, origin: pos});
 			return newCell;
 		}
 		return cell;
 	});
 	// process targets
-	targets.forEach(({pos, cell}) => {
+	targets.forEach(({pos, cell, origin}) => {
 		if (cell.status === 'split') {
-			newGrid[pos.y][pos.x] = Object.assign({}, cell);
+			newGrid[pos.y][pos.x] = Object.assign({}, cell, {
+				status: 'new',
+				origin,
+				speed: Math.floor((Math.random() * 7) + 1) * 0.0001,
+				direction: Math.floor(Math.random() * 2)
+			});
 		}
 	});
 
@@ -157,7 +164,7 @@ let hook = ({state$, actions}) => {
 
 	subs.push(
 		time.frame()
-			.filter((dt, i) => i % 32 === 0)
+			.filter((dt, i) => i % 2 === 0)
 			.withLatestFrom(
 				state$,
 				(dt, state) => state

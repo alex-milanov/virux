@@ -11,6 +11,25 @@ window.THREE = window.THREE || THREE;
 const {obj, fn} = require('iblokz-data');
 const {perlin3} = require('../../util/perlin.js');
 
+const inBetween = (a, b, percentage) => {
+	let pointA = new THREE.Vector3().copy(a);
+	let pointB = new THREE.Vector3().copy(b);
+	var dir = pointB.clone().sub(pointA);
+	var len = dir.length();
+	console.log(a, b, len);
+	dir = dir.normalize().multiplyScalar(len * percentage);
+	return pointA.clone().add(dir);
+};
+
+const moveTo = (a, b, step) => {
+	let pointA = new THREE.Vector3().copy(a);
+	let pointB = new THREE.Vector3().copy(b);
+	if (step >= pointB.clone().sub(pointA).length) return pointB.clone();
+	var dir = pointB.clone().sub(pointA).normalize().multiplyScalar(step);
+	console.log(a, b, dir, step);
+	return pointA.clone().add(dir);
+};
+
 const create = (scene, pos, cell) => {
 	console.log('creating', pos, cell);
 	let sphereGeometry = new THREE.SphereGeometry(8, 32, 32);
@@ -33,8 +52,13 @@ const create = (scene, pos, cell) => {
 	// let material = new THREE.MeshNormalMaterial();
 	let virus = new THREE.Mesh(sphereGeometry, material);
 	virus.position.y = 4;
-	virus.position.x = (-4 - 3 * 8) + pos.x * 8;
-	virus.position.z = (-4 - 3 * 8) + pos.y * 8;
+	if (cell.status === 'new') {
+		virus.position.x = (-4 - 3 * 8) + cell.origin.x * 8;
+		virus.position.z = (-4 - 3 * 8) + cell.origin.y * 8;
+	} else {
+		virus.position.x = (-4 - 3 * 8) + pos.x * 8;
+		virus.position.z = (-4 - 3 * 8) + pos.y * 8;
+	}
 	// virus.castShadow = true;
 	// virus.receiveShadow = true;
 	scene.add(virus);
@@ -42,6 +66,24 @@ const create = (scene, pos, cell) => {
 };
 
 const update = (virus, pos, cell) => {
+	if (cell.status === 'new') {
+		console.log(virus.position);
+		virus.position.copy(inBetween({
+			y: 4,
+			x: (-4 - 3 * 8) + cell.origin.x * 8,
+			z: (-4 - 3 * 8) + cell.origin.y * 8
+		}, {
+			y: 4,
+			x: (-4 - 3 * 8) + pos.x * 8,
+			z: (-4 - 3 * 8) + pos.y * 8
+		}, cell.frame / 15));
+	} else {
+		virus.position.copy({
+			y: 4,
+			x: (-4 - 3 * 8) + pos.x * 8,
+			z: (-4 - 3 * 8) + pos.y * 8
+		});
+	}
 	return virus;
 };
 
@@ -72,13 +114,17 @@ const render = ({state, scene, viruses}) => {
 		(pos, virus) => {
 			const cell = state.game.grid[pos.y][pos.x];
 			if (virus instanceof THREE.Mesh) {
-				var time = performance.now() * 0.0014;
-				var k = 3;
+				var time = performance.now() * (0.0014 + cell.speed);
+				var k = 5;
+				const levelMod = cell.level * 0.2 + ((cell.status === 'grow')
+					? cell.frame * 0.0125 - ((cell.frame + 1) % 2) * 0.005
+					: 0);
 				for (var i = 0; i < virus.geometry.vertices.length; i++) {
 					var p = virus.geometry.vertices[i];
 
 					// p.normalize().multiplyScalar(1 + 0.3 * perlin3(p.x * k, p.y * k, p.z * k));
-					p.normalize().multiplyScalar(2 + cell.level * 0.4 + 0.8 * perlin3(p.x * k + time, p.y * k, p.z * k));
+					p.normalize().multiplyScalar(1 + levelMod + 0.8 *
+						perlin3(p.x * k + time * (cell.direction === 1 ? 1 : -1), p.y * k, p.z * k));
 				}
 				virus.geometry.computeVertexNormals();
 				virus.geometry.normalsNeedUpdate = true;

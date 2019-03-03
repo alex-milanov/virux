@@ -11,7 +11,7 @@ const controls = require('./controls');
 
 module.exports = ({state, actions}) => section('#ui', [
 	header([
-		h1('Virux')
+		h1(['Vir', span('ux')])
 	]),
 	section('#view3d'),
 	footer([

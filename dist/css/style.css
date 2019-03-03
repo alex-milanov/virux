@@ -2346,7 +2346,12 @@ body {
   padding: 0px;
   display: inline-block;
   box-sizing: border-box;
-  font-family: "Open Sans"; }
+  font-family: "Open Sans";
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%; }
 
 .left {
   float: left; }
@@ -2367,10 +2372,25 @@ body {
   left: 0px;
   width: 100%;
   height: 100%;
-  background: #000;
   color: #eee;
-  overflow: hidden; }
+  overflow: hidden;
+  background-image: radial-gradient(#fff, #333); }
+  #ui::after {
+    display: block;
+    z-index: 1;
+    content: '';
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    background-blend-mode: multiply;
+    background: radial-gradient(4px 4px, black, white), radial-gradient(4px 4px, black, white), radial-gradient(4px 4px, black, white);
+    background-size: 4px 4px;
+    background-position: 0 2px,0 0,2px 0;
+    mix-blend-mode: screen; }
   #ui header, #ui footer {
+    z-index: 2;
     position: absolute;
     left: 0px;
     margin: 0px;
@@ -2401,12 +2421,14 @@ body {
       top: 0px;
       left: calc(50% - 210px);
       width: 420px;
-      font-family: "Frijole";
+      text-shadow: 0px 0px 1px #fff;
       font-size: 4em;
       font-weight: 400;
-      background: -webkit-linear-gradient(top, #fff 0%, #ccc 17%, #aaa 50%, #777 84%, #fff 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent; }
+      color: #111;
+      font-family: "Frijole"; }
+      #ui header h1 span {
+        color: #ddd;
+        text-shadow: 0px 0px 3px #000; }
     #ui header h2 {
       top: 14px;
       position: absolute;
@@ -2443,6 +2465,7 @@ body {
       font-family: "Press Start 2P";
       font-size: 0.8em; }
   #ui #view3d {
+    z-index: 2;
     position: absolute;
     top: 0px;
     left: 0px;

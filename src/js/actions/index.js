@@ -44,11 +44,13 @@ const arrToggle = (key, value) => state =>
 const zoom = amount => state => obj.patch(state, 'camera', {
 	distance: state.camera.distance + amount
 });
+const ping = () => state => state;
 
 module.exports = {
 	initial,
 	set,
 	toggle,
 	arrToggle,
+	ping,
 	zoom
 };

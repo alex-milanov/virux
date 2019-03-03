@@ -28,7 +28,7 @@ const init = ({canvas, state}) => {
 	let camera = _camera.init({state, width, height});
 
 	const scene = new THREE.Scene();
-	scene.background = new THREE.Color(0x333333);
+	// scene.background = new THREE.Color(0x333333);
 
 	scene.add(new THREE.AmbientLight(0xcccccc, 0.1));
 	// scene.add(new THREE.HemisphereLight(0x443333, 0x111122));
@@ -122,7 +122,7 @@ let hook = ({state$, actions}) => {
 
 	subs.push(
 		time.frame()
-			.filter((dt, i) => i % 8 === 0)
+			.filter((dt, i) => i % 4 === 0)
 			.withLatestFrom(
 				sceneState$,
 				state$,
