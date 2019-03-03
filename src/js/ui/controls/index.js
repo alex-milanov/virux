@@ -3,7 +3,8 @@
 // dom
 const {
 	header, h1, section, button, span, canvas,
-	form, input, label, legend, fieldset, div, i
+	form, input, label, legend, fieldset, div, i,
+	ul, li, img
 } = require('iblokz-snabbdom-helpers');
 // components
 // const counter = require('./counter');
@@ -51,26 +52,62 @@ const parseFields = (data, path, actions) => Object.keys(data)
 			boolean: () => toggleControl([].concat(path, field), data[field], actions)
 		})()), []);
 
-module.exports = ({state, actions}) => form('.controls', [
-	fieldset([].concat(
-		legend({
-			on: {
-				click: () => actions.toggle(['controls', 'camera'])
-			}
-		}, [
-			i('.fa', {
-				class: {
-					'fa-minus-square-o': state.controls.camera,
-					'fa-plus-square-o': !state.controls.camera
+module.exports = ({state, actions}) => [
+	form('.controls.right.top', [
+		fieldset([].concat(
+			legend('Game Settings'),
+			parseFields(state.gameSettings, ['gameSettings'], actions),
+			div(button(`[type="button"]`, {
+				on: {
+					click: () => actions.toggle(['game', 'playing'])
 				}
-			}),
-			'Camera'
-		]),
-		state.controls.camera && parseFields(state.camera, ['camera'], actions) || []
-	)),
-	fieldset([
-		legend('Viewport'),
-		div(`Size: ${state.viewport.screen.width} x ${state.viewport.screen.height}`),
-		div(`Mouse: ${state.viewport.mouse.x} x ${state.viewport.mouse.y}`)
+			}, state.game.playing ? 'Pause' : 'Play')),
+			div(button(`[type="button"]`, {
+				on: {
+					click: () => actions.game.reset()
+				}
+			}, 'Reset'))
+		))
+	]),
+	form('.controls.right.bottom', [
+		fieldset([].concat(
+			legend('Catalysts'),
+			ul([
+				li(button('[type="button"]', [
+					img(`[src='assets/icons/virus-grow.svg']`)
+				])),
+				li(button('[type="button"]', [
+					img(`[src='assets/icons/virus-split.svg']`)
+				])),
+				li(button('[type="button"]', [
+					img(`[src='assets/icons/virus-attack.svg']`)
+				]))
+			])
+			// parseFields(state.gameSettings, ['gameSettings'], actions),
+			// div(button(`[type="button"]`, 'Restart'))
+		))
+	]),
+	form('.controls.left.top', [
+		fieldset([].concat(
+			legend({
+				on: {
+					click: () => actions.toggle(['controls', 'camera'])
+				}
+			}, [
+				i('.fa', {
+					class: {
+						'fa-minus-square-o': state.controls.camera,
+						'fa-plus-square-o': !state.controls.camera
+					}
+				}),
+				'Camera'
+			]),
+			state.controls.camera && parseFields(state.camera, ['camera'], actions) || []
+		)),
+		fieldset([
+			legend('Viewport'),
+			div(`Size: ${state.viewport.screen.width} x ${state.viewport.screen.height}`),
+			div(`Mouse: ${state.viewport.mouse.x} x ${state.viewport.mouse.y}`)
+		])
 	])
-]);
+];

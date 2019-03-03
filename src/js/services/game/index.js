@@ -11,6 +11,7 @@ const time = require('../../util/time.js');
 const initial = {
 	sides: [0, 1],
 	side: 0,
+	playing: false,
 	grid: [
 		[{
 			side: 0,
@@ -48,8 +49,34 @@ const initial = {
 // 	[false, {}, {}]
 // ];
 
+const reset = () => state => obj.patch(state, ['game', 'grid'], fn.pipe(
+	() => (new Array(state.gameSettings.gridSize)
+		.fill({}).map(() => new Array(state.gameSettings.gridSize).fill({}))),
+	grid => {
+		grid[0][0] = {
+			side: 0,
+			level: 1,
+			status: 'idle',
+			frame: 0,
+			speed: 0.0001,
+			direction: 1
+		};
+		grid[state.gameSettings.gridSize - 1][state.gameSettings.gridSize - 1] = {
+			side: 1,
+			level: 1,
+			status: 'idle',
+			frame: 0,
+			speed: 0.0001,
+			direction: 1
+		};
+		console.log(grid);
+		return grid;
+	}
+)());
+
 const actions = {
-	initial
+	initial,
+	reset
 };
 
 const traverse = (mtrx, cb) => mtrx.map((row, y) =>
@@ -131,7 +158,7 @@ const updateStatus = (cell, pos, area, targets) => {
 // 	return {grid, side: side === 0 ? 1 : 0}
 // }
 
-const loop = state => {
+const loop = ({state}) => {
 	const {grid, sides, side} = state.game;
 	let targets = [];
 	let newGrid = traverse(grid, (pos, cell) => {
@@ -164,11 +191,12 @@ let hook = ({state$, actions}) => {
 
 	subs.push(
 		time.frame()
-			.filter((dt, i) => i % 2 === 0)
 			.withLatestFrom(
 				state$,
-				(dt, state) => state
+				(dt, state) => ({dt, state})
 			)
+			.filter(({state}) => state.game.playing)
+			.filter(({dt, state}, i) => i % (state.gameSettings.speed < 8 ? 8 - state.gameSettings.speed : 2) === 0)
 			.map(loop)
 			.subscribe(game => actions.set('game', game))
 	);

@@ -1,10 +1,7 @@
 @charset "UTF-8";
 @import url(//fonts.googleapis.com/css?family=Open+Sans);
 @import url(//fonts.googleapis.com/css?family=Press+Start+2P);
-@import url(//fonts.googleapis.com/css?family=Major+Mono+Display);
-@import url(//fonts.googleapis.com/css?family=Rye);
-@import url(//fonts.googleapis.com/css?family=Megrim);
-@import url(//fonts.googleapis.com/css?family=Wallpoet);
+@import url(//fonts.googleapis.com/css?family=Play);
 @import url(//fonts.googleapis.com/css?family=Frijole);
 /*!
  *  Font Awesome 4.7.0 by @davegandy - http://fontawesome.io - @fontawesome
@@ -2413,8 +2410,8 @@ body {
       padding: 0px;
       display: inline-block;
       box-sizing: border-box;
-      height: 96px;
-      line-height: 96px;
+      height: 112px;
+      line-height: 112px;
       margin: 0px 3px; }
     #ui header h1 {
       position: absolute;
@@ -2474,36 +2471,42 @@ body {
     overflow: hidden; }
   #ui .controls {
     position: absolute;
-    top: 64px;
-    left: 16px;
-    width: 240px;
-    min-height: 400px;
+    width: 300px;
     opacity: 0.7;
     z-index: 1000;
-    font-family: "Nova Flat"; }
+    font-family: "Play", Helvetica, Arial, sans-serif;
+    font-size: 1.2em; }
+    #ui .controls.top {
+      top: 32px; }
+    #ui .controls.bottom {
+      bottom: 32px; }
+    #ui .controls.left {
+      left: 16px; }
+    #ui .controls.right {
+      right: 16px; }
     #ui .controls fieldset {
       margin: 0px;
       padding: 0px;
       display: inline-block;
       box-sizing: border-box;
-      padding: 0px;
-      padding-left: 14px;
+      width: 100%;
+      padding: 14px 8px;
       background: rgba(50, 50, 50, 0.2);
       margin-bottom: 10px;
-      padding-bottom: 10px;
-      border-color: #999999;
-      border-width: 1px 1px 1px 4px;
-      box-shadow: inset 0px 0px 24px rgba(153, 153, 153, 0.5); }
+      border-color: #eee;
+      border-width: 2px 2px 2px 2px;
+      box-shadow: inset 0px 0px 24px rgba(153, 153, 153, 0.5), 1px 1px 3px #333; }
       #ui .controls fieldset legend {
         padding: 0px 5px 0px 5px;
         margin: 0px 5px;
         user-select: none;
         cursor: pointer;
-        color: white; }
+        color: white;
+        text-shadow: 1px 1px 3px #000; }
         #ui .controls fieldset legend i {
           margin-right: 5px;
           font-size: 0.9em;
-          margin-left: -16px; }
+          margin-left: 0px; }
       #ui .controls fieldset label, #ui .controls fieldset input, #ui .controls fieldset div {
         margin: 0px;
         padding: 0px;
@@ -2512,7 +2515,8 @@ body {
         line-height: 32px;
         border: 0px;
         color: white;
-        font-family: "Nova Flat"; }
+        font-family: "Play", Helvetica, Arial, sans-serif;
+        text-shadow: 1px 1px 3px #000; }
       #ui .controls fieldset > div {
         padding: 0px 10px;
         width: 100%;
@@ -2532,6 +2536,37 @@ body {
         background: none;
         outline: none;
         font-size: 1em; }
+      #ui .controls fieldset button {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        box-sizing: border-box;
+        width: 100%;
+        background: rgba(119, 119, 119, 0.7);
+        color: white;
+        font-family: "Play", Helvetica, Arial, sans-serif;
+        font-size: 1em;
+        cursor: pointer;
+        line-height: 1.8em;
+        vertical-align: middle;
+        outline: none; }
+        #ui .controls fieldset button img {
+          vertical-align: middle; }
+        #ui .controls fieldset button:hover {
+          background: #aaaaaa; }
+      #ui .controls fieldset ul {
+        margin: 0px;
+        padding: 0px;
+        display: inline-block;
+        box-sizing: border-box;
+        width: 100%; }
+        #ui .controls fieldset ul li {
+          margin: 0px;
+          padding: 0px;
+          display: inline-block;
+          box-sizing: border-box;
+          padding: 4px;
+          width: 33.33%; }
   #ui audio {
     position: absolute;
     top: 20px;

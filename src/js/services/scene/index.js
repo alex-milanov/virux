@@ -78,7 +78,7 @@ const render = ({viruses, scene, camera, renderer, state, effect, grid, mirror})
 		viruses = _viruses.render({state, scene, viruses});
 	}
 	camera = _camera.refresh({camera, state});
-	grid = _grid.refresh({grid, mirror, state, scene});
+	grid = _grid.render({grid, mirror, state, scene});
 
 	renderer.setSize(state.viewport.screen.width, state.viewport.screen.height);
 	// renderer.setFaceCulling(0);
@@ -111,9 +111,21 @@ let hook = ({state$, actions}) => {
 			};
 		});
 
+	const gridUpdates$ = state$.distinctUntilChanged(state => state.game.grid.length)
+		.map(state => sceneState => {
+			let {scene, grid, mirror} = sceneState;
+			// console.log(viruses);
+			let newGridMirror = (grid && mirror) ? _grid.refresh({state, scene, grid, mirror}) : {};
+			return {
+				...sceneState,
+				...newGridMirror
+			};
+		});
+
 	const sceneState$ = $.merge(
 		init$,
-		viruses$
+		viruses$,
+		gridUpdates$
 		// character$,
 		// npcs$
 	)

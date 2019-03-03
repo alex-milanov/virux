@@ -13,8 +13,13 @@ const initial = {
 			hOffset: -180,
 			v: 90,
 			vOffset: -80
-		},
-		followPlayer: false
+		}
+	},
+	gameSettings: {
+		gridSize: 8,
+		areaRadius: 1,
+		speed: 6,
+		scatter: false
 	},
 	viewport: {
 		screen: {

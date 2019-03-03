@@ -30,7 +30,10 @@ const moveTo = (a, b, step) => {
 	return pointA.clone().add(dir);
 };
 
-const create = (scene, pos, cell) => {
+const calcOrigin = gridSize => (-4 - (gridSize / 2 - 1) * 8);
+
+const create = (scene, pos, cell, gridSize = 8) => {
+	let origin = calcOrigin(gridSize);
 	console.log('creating', pos, cell);
 	let sphereGeometry = new THREE.SphereGeometry(8, 32, 32);
 	const alpha = 0.3; // cell.side === 0 ? 0 : 1;
@@ -53,11 +56,11 @@ const create = (scene, pos, cell) => {
 	let virus = new THREE.Mesh(sphereGeometry, material);
 	virus.position.y = 4;
 	if (cell.status === 'new') {
-		virus.position.x = (-4 - 3 * 8) + cell.origin.x * 8;
-		virus.position.z = (-4 - 3 * 8) + cell.origin.y * 8;
+		virus.position.x = origin + cell.origin.x * 8;
+		virus.position.z = origin + cell.origin.y * 8;
 	} else {
-		virus.position.x = (-4 - 3 * 8) + pos.x * 8;
-		virus.position.z = (-4 - 3 * 8) + pos.y * 8;
+		virus.position.x = origin + pos.x * 8;
+		virus.position.z = origin + pos.y * 8;
 	}
 	// virus.castShadow = true;
 	// virus.receiveShadow = true;
@@ -65,26 +68,33 @@ const create = (scene, pos, cell) => {
 	return virus;
 };
 
-const update = (virus, pos, cell) => {
+const update = (virus, pos, cell, gridSize = 8) => {
+	let origin = calcOrigin(gridSize);
 	if (cell.status === 'new') {
 		console.log(virus.position);
 		virus.position.copy(inBetween({
 			y: 4,
-			x: (-4 - 3 * 8) + cell.origin.x * 8,
-			z: (-4 - 3 * 8) + cell.origin.y * 8
+			x: origin + cell.origin.x * 8,
+			z: origin + cell.origin.y * 8
 		}, {
 			y: 4,
-			x: (-4 - 3 * 8) + pos.x * 8,
-			z: (-4 - 3 * 8) + pos.y * 8
+			x: origin + pos.x * 8,
+			z: origin + pos.y * 8
 		}, cell.frame / 15));
 	} else {
 		virus.position.copy({
 			y: 4,
-			x: (-4 - 3 * 8) + pos.x * 8,
-			z: (-4 - 3 * 8) + pos.y * 8
+			x: origin + pos.x * 8,
+			z: origin + pos.y * 8
 		});
 	}
 	return virus;
+};
+
+const remove = (virus, scene) => {
+	scene.remove(virus);
+	// virus.dispose();
+	return {};
 };
 
 const traverse = (mtrx, cb) => mtrx.map((row, y) =>
@@ -93,17 +103,30 @@ const traverse = (mtrx, cb) => mtrx.map((row, y) =>
 
 const init = ({state, scene}) => {
 	let viruses = traverse(state.game.grid,
-		(pos, cell) => cell.side !== undefined ? create(scene, pos, cell) : cell
+		(pos, cell) => cell.side !== undefined ? create(scene, pos, cell, state.game.grid.length) : cell
 	);
 	return viruses;
 };
 
 const refresh = ({state, scene, viruses}) => {
+	// remove unneeded
 	viruses = traverse(viruses, fn.pipe(
 		(pos, virus) => virus instanceof THREE.Mesh
-			? update(virus, pos, state.game.grid[pos.y][pos.x])
+			&& state.game.grid[pos.y][pos.x].side !== undefined
+				? virus
+				: remove(virus, scene)
+	));
+	// reset stuff
+	viruses = traverse(state.game.grid, fn.pipe(
+		(pos, cell) => (viruses[pos.y] && viruses[pos.y][pos.x])
+			? {pos, virus: viruses[pos.y][pos.x]}
+			: {pos, virus: {}},
+		({pos, virus}) => virus instanceof THREE.Mesh
+			? state.game.grid[pos.y][pos.x].side === undefined
+				? remove(virus, scene)
+				: update(virus, pos, state.game.grid[pos.y][pos.x], state.game.grid.length)
 			: state.game.grid[pos.y][pos.x].side !== undefined
-				? create(scene, pos, state.game.grid[pos.y][pos.x])
+				? create(scene, pos, state.game.grid[pos.y][pos.x], state.game.grid.length)
 				: virus
 	));
 	return viruses;

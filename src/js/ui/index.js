@@ -9,7 +9,7 @@ const {
 // components
 const controls = require('./controls');
 
-module.exports = ({state, actions}) => section('#ui', [
+module.exports = ({state, actions}) => section('#ui', [].concat(
 	header([
 		h1(['Vir', span('ux')])
 	]),
@@ -19,4 +19,4 @@ module.exports = ({state, actions}) => section('#ui', [
 	]),
 	controls({state, actions})
 	// audio(`[src="assets/samples/ambient.ogg"][autoplay="true"][controls="true"][loop="true"]`)
-]);
+));

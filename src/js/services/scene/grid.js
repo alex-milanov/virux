@@ -47,6 +47,20 @@ const init = ({scene, state, width, height}) => {
 };
 
 const refresh = ({grid, mirror, scene, state}) => {
+	let material = grid.material;
+	grid.geometry = new THREE.PlaneGeometry(8 * state.gameSettings.gridSize, 8 * state.gameSettings.gridSize);
+	grid.material.map.repeat.set(state.gameSettings.gridSize / 8, state.gameSettings.gridSize / 8);
+	mirror.geometry = new THREE.PlaneGeometry(8 * state.gameSettings.gridSize, 8 * state.gameSettings.gridSize);
+	// grid.geometry.normalsNeedUpdate = true;
+	// grid.geometry.computeFaceNormals();
+	// grid.geometry.computeFlatVertexNormals();
+	// mirror.geometry.normalsNeedUpdate = true;
+	// mirror.geometry.computeFaceNormals();
+
+	return {grid, mirror};
+};
+
+const render = ({grid, mirror, scene, state}) => {
 	// grid.geometry.normalsNeedUpdate = true;
 	// grid.geometry.computeFaceNormals();
 	// grid.geometry.computeFlatVertexNormals();
@@ -58,5 +72,6 @@ const refresh = ({grid, mirror, scene, state}) => {
 
 module.exports = {
 	init,
-	refresh
+	refresh,
+	render
 };

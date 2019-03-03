@@ -21,13 +21,16 @@
   "dependencies": {
     "bourbon": "^4.2.7",
     "bourbon-neat": "^1.8.0",
+    "extract-svg-path": "^2.1.0",
     "font-awesome": "^4.7.0",
     "iblokz-data": "^1.2.0",
     "iblokz-snabbdom-helpers": "^1.2.0",
+    "load-svg": "^1.0.0",
     "raf": "^3.4.1",
     "rx": "^4.1.0",
     "snabbdom": "^0.5.4",
     "superagent": "^3.3.1",
+    "svg-mesh-3d": "^1.1.0",
     "three": "^0.102.0"
   },
   "devDependencies": {
