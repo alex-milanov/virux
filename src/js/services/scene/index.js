@@ -25,17 +25,16 @@ const init = ({canvas, state}) => {
 	let height = canvas.offsetHeight;
 
 	// let camera = new THREE.PerspectiveCamera(70, width / height, 1, 1000);
-	let camera = new THREE.PerspectiveCamera(45, width / height, 1, 1000);
-	camera.position.z = 100;
-	camera.position.y = 50;
+	let camera = _camera.init({state, width, height});
 
 	const scene = new THREE.Scene();
+	scene.background = new THREE.Color(0x111111);
 
 	scene.add(new THREE.AmbientLight(0xcccccc, 0.1));
 	// scene.add(new THREE.HemisphereLight(0x443333, 0x111122));
 	// scene.add(new THREE.PointLight(0xffffff, 0.3));
 	let dirLight = new THREE.DirectionalLight(0xffffff, 1);
-	dirLight.color.setHSL(0.1, 0, 0.8);
+	dirLight.color.setHSL(0.1, 0, 0.7);
 	dirLight.position.set(0.5, 1.5, -1);
 	dirLight.position.multiplyScalar(30);
 	dirLight.castShadow = true;
@@ -55,7 +54,7 @@ const init = ({canvas, state}) => {
 
 	let plane = false;
 	// init grid
-	let grid = _grid.init({scene, state});
+	let {grid, mirror} = _grid.init({scene, state, width, height});
 	let viruses = _viruses.init({scene, state});
 
 	let renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
@@ -69,21 +68,23 @@ const init = ({canvas, state}) => {
 	canvas.innerHTML = '';
 	canvas.appendChild(renderer.domElement);
 
-	return {scene, light: dirLight, renderer, camera, canvas: renderer.domElement, viruses, effect};
+	return {scene, light: dirLight, renderer, camera, canvas: renderer.domElement, viruses, effect, grid, mirror};
 };
 
-const render = ({viruses, scene, camera, renderer, state, effect}) => {
+const render = ({viruses, scene, camera, renderer, state, effect, grid, mirror}) => {
+	if (!scene) return;
 	// console.log(items);
 	if (viruses) {
-		viruses = _viruses.refresh({state, scene, viruses});
+		viruses = _viruses.render({state, scene, viruses});
 	}
 	camera = _camera.refresh({camera, state});
+	grid = _grid.refresh({grid, mirror, state, scene});
 
 	renderer.setSize(state.viewport.screen.width, state.viewport.screen.height);
 	// renderer.setFaceCulling(0);
 	// renderer.render(scene, camera);
 	effect.render(scene, camera);
-	return {viruses, scene, camera, renderer, state, effect};
+	return {viruses, scene, camera, renderer, state, effect, grid, mirror};
 };
 
 let unhook = () => {};
@@ -97,8 +98,22 @@ let hook = ({state$, actions}) => {
 		.withLatestFrom(state$, (canvas, state) => ({canvas, state}))
 		.map(({canvas, state}) => () => init({canvas, state}));
 
+	const viruses$ = state$.distinctUntilChanged(state => state.game.grid)
+		.map(state => sceneState => {
+			let {scene, viruses} = sceneState;
+			console.log(viruses);
+			if (viruses) {
+				viruses = _viruses.refresh({state, scene, viruses});
+			}
+			return {
+				...sceneState,
+				viruses
+			};
+		});
+
 	const sceneState$ = $.merge(
-		init$
+		init$,
+		viruses$
 		// character$,
 		// npcs$
 	)

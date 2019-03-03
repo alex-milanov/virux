@@ -14,7 +14,12 @@ const calcucalateAngle = (viewport, range) => ({
 	y: (viewport.mouse.y / viewport.screen.height * range.v) + range.vOffset
 });
 
-const init = () => {};
+const init = ({state, width, height}) => {
+	let camera = new THREE.PerspectiveCamera(45, width / height, 1, 1000);
+	camera.position.z = 100;
+	camera.position.y = 50;
+	return camera;
+};
 
 let cameraAngle = {x: 45, y: 210};
 let mouse = false;

@@ -13,7 +13,7 @@ const {perlin3} = require('../../util/perlin.js');
 
 const create = (scene, pos, cell) => {
 	console.log('creating', pos, cell);
-	let sphereGeometry = new THREE.SphereGeometry(8, 128, 128);
+	let sphereGeometry = new THREE.SphereGeometry(8, 64, 64);
 	const alpha = 0.3; // cell.side === 0 ? 0 : 1;
 	const beta = 0.3;
 	const gamma = 1;
@@ -35,22 +35,13 @@ const create = (scene, pos, cell) => {
 	virus.position.y = 4;
 	virus.position.x = (-4 - 3 * 8) + pos.x * 8;
 	virus.position.z = (-4 - 3 * 8) + pos.y * 8;
+	// virus.castShadow = true;
+	// virus.receiveShadow = true;
 	scene.add(virus);
 	return virus;
 };
 
 const update = (virus, pos, cell) => {
-	var time = performance.now() * 0.0007;
-	var k = 3;
-	for (var i = 0; i < virus.geometry.vertices.length; i++) {
-		var p = virus.geometry.vertices[i];
-
-		// p.normalize().multiplyScalar(1 + 0.3 * perlin3(p.x * k, p.y * k, p.z * k));
-		p.normalize().multiplyScalar(3 + 0.8 * perlin3(p.x * k + time, p.y * k, p.z * k));
-	}
-	virus.geometry.computeVertexNormals();
-	virus.geometry.normalsNeedUpdate = true;
-	virus.geometry.verticesNeedUpdate = true; // must be set or vertices will not update
 	return virus;
 };
 
@@ -76,7 +67,30 @@ const refresh = ({state, scene, viruses}) => {
 	return viruses;
 };
 
+const render = ({state, scene, viruses}) => {
+	viruses = traverse(viruses,
+		(pos, virus) => {
+			const cell = state.game.grid[pos.y][pos.x];
+			if (virus instanceof THREE.Mesh) {
+				var time = performance.now() * 0.0007;
+				var k = 3;
+				for (var i = 0; i < virus.geometry.vertices.length; i++) {
+					var p = virus.geometry.vertices[i];
+
+					// p.normalize().multiplyScalar(1 + 0.3 * perlin3(p.x * k, p.y * k, p.z * k));
+					p.normalize().multiplyScalar(2 + cell.level * 0.4 + 0.8 * perlin3(p.x * k + time, p.y * k, p.z * k));
+				}
+				virus.geometry.computeVertexNormals();
+				virus.geometry.normalsNeedUpdate = true;
+				virus.geometry.verticesNeedUpdate = true; // must be set or vertices will not update
+			}
+			return virus;
+		});
+	return viruses;
+};
+
 module.exports = {
 	init,
-	refresh
+	refresh,
+	render
 };

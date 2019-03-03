@@ -2,6 +2,10 @@
 @import url(//fonts.googleapis.com/css?family=Open+Sans);
 @import url(//fonts.googleapis.com/css?family=Press+Start+2P);
 @import url(//fonts.googleapis.com/css?family=Major+Mono+Display);
+@import url(//fonts.googleapis.com/css?family=Rye);
+@import url(//fonts.googleapis.com/css?family=Megrim);
+@import url(//fonts.googleapis.com/css?family=Wallpoet);
+@import url(//fonts.googleapis.com/css?family=Frijole);
 /*!
  *  Font Awesome 4.7.0 by @davegandy - http://fontawesome.io - @fontawesome
  *  License - http://fontawesome.io/license (Font: SIL OFL 1.1, CSS: MIT License)
@@ -2397,10 +2401,10 @@ body {
       top: 0px;
       left: calc(50% - 210px);
       width: 420px;
-      font-family: "Major Mono Display";
+      font-family: "Frijole";
       font-size: 4em;
       font-weight: 400;
-      background: -webkit-linear-gradient(top, #fff 0%, #aac5de 17%, #6199c7 50%, #3a84c3 84%, #fff 100%);
+      background: -webkit-linear-gradient(top, #fff 0%, #ccc 17%, #aaa 50%, #777 84%, #fff 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent; }
     #ui header h2 {
@@ -2461,12 +2465,12 @@ body {
       box-sizing: border-box;
       padding: 0px;
       padding-left: 14px;
-      background: rgba(0, 50, 70, 0.3);
+      background: rgba(50, 50, 50, 0.2);
       margin-bottom: 10px;
       padding-bottom: 10px;
-      border-color: #71a1d1;
+      border-color: #999999;
       border-width: 1px 1px 1px 4px;
-      box-shadow: inset 0px 0px 24px rgba(113, 161, 209, 0.5); }
+      box-shadow: inset 0px 0px 24px rgba(153, 153, 153, 0.5); }
       #ui .controls fieldset legend {
         padding: 0px 5px 0px 5px;
         margin: 0px 5px;
