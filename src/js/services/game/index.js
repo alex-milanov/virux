@@ -49,39 +49,15 @@ const initial = {
 // 	[false, {}, {}]
 // ];
 
-const reset = () => state => obj.patch(state, ['game', 'grid'], fn.pipe(
-	() => (new Array(state.gameSettings.gridSize)
-		.fill({}).map(() => new Array(state.gameSettings.gridSize).fill({}))),
-	grid => {
-		grid[0][0] = {
-			side: 0,
-			level: 1,
-			status: 'idle',
-			frame: 0,
-			speed: 0.0001,
-			direction: 1
-		};
-		grid[state.gameSettings.gridSize - 1][state.gameSettings.gridSize - 1] = {
-			side: 1,
-			level: 1,
-			status: 'idle',
-			frame: 0,
-			speed: 0.0001,
-			direction: 1
-		};
-		console.log(grid);
-		return grid;
-	}
-)());
-
-const actions = {
-	initial,
-	reset
-};
-
 const traverse = (mtrx, cb) => mtrx.map((row, y) =>
 	row.map((cell, x) => cb({x, y}, cell))
 );
+
+const getArea = (grid, pos, radius = 1) => fn.pipe(
+	() => new Array(radius * 2 + 1).fill(new Array(radius * 2 + 1).fill({})),
+	area => traverse(area, ({x, y}) =>
+		grid[pos.y - radius + y] && grid[pos.y - radius + y][pos.x - radius + x] || false)
+)();
 
 const filter = (mtrx, f) => {
 	let arr = [];
@@ -91,11 +67,58 @@ const filter = (mtrx, f) => {
 
 const random = arr => arr[Math.floor(Math.random() * arr.length)];
 
-const getArea = (grid, pos, radius = 1) => fn.pipe(
-	() => new Array(radius * 2 + 1).fill(new Array(radius * 2 + 1).fill({})),
-	area => traverse(area, ({x, y}) =>
-		grid[pos.y - radius + y] && grid[pos.y - radius + y][pos.x - radius + x] || false)
-)();
+const basicCell = {
+	side: 0,
+	level: 1,
+	status: 'idle',
+	frame: 0,
+	speed: 0.0001,
+	direction: 1
+};
+
+const fillGrid = (data, grid, center, radius = 1) => {
+	let emptyCells = filter(grid, (pos, cell) =>
+		(pos.x >= center - radius && pos.x <= center + radius)
+		&& (pos.y >= center - radius && pos.y <= center + radius)
+		&& cell && !cell.side);
+	console.log(emptyCells);
+	let fp = random(emptyCells).pos;
+	grid[fp.y][fp.x] = data;
+};
+
+const reset = () => state => obj.patch(state, ['game', 'grid'], fn.pipe(
+	() => (new Array(state.gameSettings.gridSize)
+		.fill({}).map(() => new Array(state.gameSettings.gridSize).fill({}))),
+	grid => {
+		let maxRange = state.gameSettings.gridSize - 1;
+		if (state.gameSettings.scatter) {
+			let whiteCells = new Array(state.gameSettings.startingCells).fill({}).map(() => Object.assign({}, basicCell, {
+				side: 0
+			}));
+			let blackCells = new Array(state.gameSettings.startingCells).fill({}).map(() => Object.assign({}, basicCell, {
+				side: 1
+			}));
+
+			whiteCells.forEach(cell => fillGrid(cell, grid, state.gameSettings.scatterRadius, state.gameSettings.scatterRadius));
+			blackCells.forEach(cell => fillGrid(cell, grid, maxRange - state.gameSettings.scatterRadius, state.gameSettings.scatterRadius));
+		} else {
+			grid[0][0] = Object.assign({}, basicCell, {
+				side: 0
+			});
+			grid[maxRange][maxRange] = Object.assign({}, basicCell, {
+				side: 1
+			});
+		}
+
+		console.log(grid);
+		return grid;
+	}
+)());
+
+const actions = {
+	initial,
+	reset
+};
 
 const maxLevel = 8;
 const frameCount = 16;

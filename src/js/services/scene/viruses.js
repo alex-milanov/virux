@@ -112,7 +112,7 @@ const refresh = ({state, scene, viruses}) => {
 	// remove unneeded
 	viruses = traverse(viruses, fn.pipe(
 		(pos, virus) => virus instanceof THREE.Mesh
-			&& state.game.grid[pos.y][pos.x].side !== undefined
+			&& state.game.grid[pos.y] && state.game.grid[pos.y][pos.x] && state.game.grid[pos.y][pos.x].side !== undefined
 				? virus
 				: remove(virus, scene)
 	));

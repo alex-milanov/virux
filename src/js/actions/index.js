@@ -17,9 +17,11 @@ const initial = {
 	},
 	gameSettings: {
 		gridSize: 8,
-		areaRadius: 1,
+		cellRadius: 1,
 		speed: 6,
-		scatter: false
+		startingCells: 3,
+		scatter: false,
+		scatterRadius: 2
 	},
 	viewport: {
 		screen: {
