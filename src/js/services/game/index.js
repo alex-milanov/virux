@@ -13,8 +13,10 @@ const initial = {
 	sides: [0, 1],
 	side: 0,
 	playing: false,
+	catalyst: false,
 	grid: [
 		[{
+			type: 'virus',
 			side: 0,
 			level: 1,
 			status: 'idle',
@@ -29,6 +31,7 @@ const initial = {
 		[{}, {}, {}, {}, {}, {}, {}, {}],
 		[{}, {}, {}, {}, {}, {}, {}, {}],
 		[{}, {}, {}, {}, {}, {}, {}, {
+			type: 'virus',
 			side: 1,
 			level: 1,
 			status: 'idle',
@@ -53,6 +56,7 @@ const initial = {
 const random = arr => arr[Math.floor(Math.random() * arr.length)];
 
 const basicCell = {
+	type: 'virus',
 	side: 0,
 	level: 1,
 	status: 'idle',
@@ -60,6 +64,24 @@ const basicCell = {
 	speed: 0.0001,
 	direction: 1
 };
+
+const gridSet = (grid, pos, val) => {
+	grid[pos.y][pos.x] = val;
+	return grid;
+};
+
+const toggleCatalyst = (pos, kind) => state => fn.pipe(
+	() => state.game.grid[pos.y][pos.x],
+	cell => obj.patch(state, ['game', 'grid'], gridSet(state.game.grid, pos,
+		(!cell.type)
+			? {type: 'catalyst', kind}
+			: cell.type === 'catalyst'
+				? cell.kind === kind
+					? {}
+					: {type: 'catalyst', kind}
+				: cell
+	))
+)();
 
 const fillGrid = (data, grid, center, radius = 1) => {
 	let emptyCells = gridUtil.filter(grid, (pos, cell) =>
@@ -104,21 +126,31 @@ const reset = () => state => obj.patch(state, ['game', 'grid'], fn.pipe(
 
 const actions = {
 	initial,
-	reset
+	reset,
+	toggleCatalyst
 };
 
 const maxLevel = 8;
-const frameCount = 16;
+const defaultFrameCount = 16;
 
 const updateStatus = (cell, pos, area, targets) => {
 	let {status, level, frame} = cell;
 	let target = false;
-	let emptyCells = gridUtil.filter(area, (p, c) => c !== false && c.side === undefined
+	let emptyCells = gridUtil.filter(area, (p, c) => c !== false && c.type === undefined
 		&& !targets.find(({pos}) => pos.x === p.x && pos.y === p.y)
 	);
-	let enemyCells = gridUtil.filter(area, (p, c) => c && c.side !== undefined && c.side !== cell.side
+	let enemyCells = gridUtil.filter(area, (p, c) => c && c.type === 'virus' && c.side !== cell.side
 		&& !targets.find(({pos}) => pos.x === p.x && pos.y === p.y)
 	);
+	let catalysts = gridUtil.filter(area, (p, c) => c && c.type === 'catalyst');
+	// frameCount
+	let frameCount = defaultFrameCount;
+	// grow
+	if (catalysts.find(({cell}) => cell.kind === 'grow') && status === 'grow') {
+		frameCount = defaultFrameCount / 2;
+	} else if (catalysts.find(({cell}) => cell.kind === 'split') && status === 'split') {
+		frameCount = defaultFrameCount / 2;
+	}
 	// console.log(area, emptyCells, enemyCells, targets);
 	switch (cell.status) {
 		case 'grow':

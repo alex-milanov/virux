@@ -2554,7 +2554,7 @@ body {
         outline: none; }
         #ui .controls fieldset button img {
           vertical-align: middle; }
-        #ui .controls fieldset button:hover {
+        #ui .controls fieldset button:hover, #ui .controls fieldset button.selected {
           background: #aaaaaa; }
       #ui .controls fieldset ul {
         margin: 0px;

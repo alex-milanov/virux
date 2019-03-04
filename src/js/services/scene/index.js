@@ -22,6 +22,7 @@ const time = require('../../util/time.js');
 const _camera = require('./camera');
 const _grid = require('./grid');
 const _viruses = require('./viruses');
+const _catalysts = require('./catalysts');
 
 const init = ({canvas, state}) => {
 	let width = canvas.offsetWidth;
@@ -60,30 +61,6 @@ const init = ({canvas, state}) => {
 	let {grid, mirror} = _grid.init({scene, state, width, height});
 	let viruses = _viruses.init({scene, state});
 
-	svg2mesh.convert('assets/icons/virus-attack.svg')
-		.subscribe(geometry => {
-			let specularColor = new THREE.Color(0.8, 0.8, 0.8);
-			let specularShininess = Math.pow(2, 1);
-			let diffuseColor = new THREE.Color().setHSL(1,
-				0,
-				0.7
-				// gamma * 0.5 + 0.1).multiplyScalar(1 - beta * 0.2
-			);
-			let material = new THREE.MeshToonMaterial({
-				color: diffuseColor,
-				specular: specularColor,
-				reflectivity: 8,
-				shininess: specularShininess,
-				side: THREE.DoubleSide
-			});
-			const mesh = new THREE.Mesh(geometry, material);
-			mesh.position.set(0, 0.5, 0);
-			mesh.scale.set(3.5, 3.5, 3.5);
-			mesh.rotateX(Math.PI / 2);
-			scene.add(mesh);
-			console.log(geometry);
-		});
-
 	let raycaster = new THREE.Raycaster();
 
 	let renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
@@ -97,10 +74,16 @@ const init = ({canvas, state}) => {
 	canvas.innerHTML = '';
 	canvas.appendChild(renderer.domElement);
 
-	return {scene, light: dirLight, renderer, camera, raycaster, canvas: renderer.domElement, viruses, effect, grid, mirror};
+	let catalysts = [];
+
+	return {
+		scene, light: dirLight, renderer,
+		camera, raycaster, canvas: renderer.domElement,
+		viruses, catalysts, effect, grid, mirror
+	};
 };
 
-const render = ({state, actions, scene, viruses, camera, renderer, raycaster, effect, grid, mirror}) => {
+const render = ({state, actions, scene, viruses, catalysts, camera, renderer, raycaster, effect, grid, mirror}) => {
 	if (!scene) return;
 	// console.log(items);
 	if (viruses) {
@@ -145,18 +128,28 @@ let hook = ({state$, actions}) => {
 		.withLatestFrom(state$, (canvas, state) => ({canvas, state}))
 		.map(({canvas, state}) => () => init({canvas, state}));
 
-	const viruses$ = state$.distinctUntilChanged(state => state.game.grid)
+	const assetUpdates$ = state$.distinctUntilChanged(state => state.game.grid)
 		.map(state => sceneState => {
-			let {scene, viruses} = sceneState;
+			let {scene, viruses, catalystMeshes, catalysts} = sceneState;
 			// console.log(viruses);
 			if (viruses) {
 				viruses = _viruses.refresh({state, scene, viruses});
+			}
+			if (catalysts && catalystMeshes) {
+				console.log(catalystMeshes);
+				catalysts = _catalysts.refresh({state, scene, catalysts, catalystMeshes});
 			}
 			return {
 				...sceneState,
 				viruses
 			};
 		});
+
+	const catalystMeshes$ = $.fromArray(['attack', 'grow', 'split'])
+		.concatMap(catalyst => _catalysts.loadMesh(`assets/icons/virus-${catalyst}.svg`)
+			.map(mesh => ({[catalyst]: mesh})))
+		.reduce((o, c) => ({...o, ...c}), {})
+		.map(catalystMeshes => sceneState => Object.assign({}, sceneState, {catalystMeshes}));
 
 	const gridUpdates$ = state$.distinctUntilChanged(state => state.game.grid.length)
 		.map(state => sceneState => {
@@ -173,7 +166,8 @@ let hook = ({state$, actions}) => {
 		.flatMap(initSceneReducer =>
 			$.merge(
 				$.just(initSceneReducer),
-				viruses$,
+				catalystMeshes$,
+				assetUpdates$,
 				gridUpdates$
 				// character$,
 				// npcs$

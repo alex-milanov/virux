@@ -73,13 +73,34 @@ module.exports = ({state, actions}) => [
 		fieldset([].concat(
 			legend('Catalysts'),
 			ul([
-				li(button('[type="button"]', [
+				li(button('[type="button"]', {
+					class: {
+						selected: state.game.catalyst === 'grow'
+					},
+					on: {
+						click: () => actions.set(['game', 'catalyst'], state.game.catalyst === 'grow' ? false : 'grow')
+					}
+				}, [
 					img(`[src='assets/icons/virus-grow.svg']`)
 				])),
-				li(button('[type="button"]', [
+				li(button('[type="button"]', {
+					class: {
+						selected: state.game.catalyst === 'split'
+					},
+					on: {
+						click: () => actions.set(['game', 'catalyst'], state.game.catalyst === 'split' ? false : 'split')
+					}
+				}, [
 					img(`[src='assets/icons/virus-split.svg']`)
 				])),
-				li(button('[type="button"]', [
+				li(button('[type="button"]', {
+					class: {
+						selected: state.game.catalyst === 'attack'
+					},
+					on: {
+						click: () => actions.set(['game', 'catalyst'], state.game.catalyst === 'attack' ? false : 'attack')
+					}
+				}, [
 					img(`[src='assets/icons/virus-attack.svg']`)
 				]))
 			])

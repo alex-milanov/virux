@@ -135,10 +135,10 @@ const render = ({state, scene, viruses}) => {
 			const cell = state.game.grid[pos.y][pos.x];
 			if (virus instanceof THREE.Mesh) {
 				var time = performance.now() * (0.0014 + cell.speed);
-				var k = 5;
 				const levelMod = cell.level * 0.2 + ((cell.status === 'grow')
 					? cell.frame * 0.0125 - ((cell.frame + 1) % 2) * 0.005
 					: 0);
+				var k = 5 + levelMod * 0.6;
 				for (var i = 0; i < virus.geometry.vertices.length; i++) {
 					var p = virus.geometry.vertices[i];
 
