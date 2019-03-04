@@ -31,7 +31,8 @@
     "snabbdom": "^0.5.4",
     "superagent": "^3.3.1",
     "svg-mesh-3d": "^1.1.0",
-    "three": "^0.102.0"
+    "three": "^0.102.0",
+    "three-simplicial-complex": "^69.0.6"
   },
   "devDependencies": {
     "browserify": "^13.1.1",

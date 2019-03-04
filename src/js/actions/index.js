@@ -31,7 +31,8 @@ const initial = {
 		mouse: {
 			x: 0,
 			y: 0,
-			down: false
+			down: false,
+			coords: []
 		}
 	},
 	controls: {

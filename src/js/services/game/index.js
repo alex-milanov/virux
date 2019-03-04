@@ -92,6 +92,7 @@ const reset = () => state => obj.patch(state, ['game', 'grid'], fn.pipe(
 	grid => {
 		let maxRange = state.gameSettings.gridSize - 1;
 		if (state.gameSettings.scatter) {
+			let scatterRadius = state.gameSettings.scatterRadius;
 			let whiteCells = new Array(state.gameSettings.startingCells).fill({}).map(() => Object.assign({}, basicCell, {
 				side: 0
 			}));
@@ -99,8 +100,8 @@ const reset = () => state => obj.patch(state, ['game', 'grid'], fn.pipe(
 				side: 1
 			}));
 
-			whiteCells.forEach(cell => fillGrid(cell, grid, state.gameSettings.scatterRadius, state.gameSettings.scatterRadius));
-			blackCells.forEach(cell => fillGrid(cell, grid, maxRange - state.gameSettings.scatterRadius, state.gameSettings.scatterRadius));
+			whiteCells.forEach(cell => fillGrid(cell, grid, scatterRadius, scatterRadius));
+			blackCells.forEach(cell => fillGrid(cell, grid, maxRange - scatterRadius, scatterRadius));
 		} else {
 			grid[0][0] = Object.assign({}, basicCell, {
 				side: 0

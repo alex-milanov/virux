@@ -107,7 +107,7 @@ module.exports = ({state, actions}) => [
 		fieldset([
 			legend('Viewport'),
 			div(`Size: ${state.viewport.screen.width} x ${state.viewport.screen.height}`),
-			div(`Mouse: ${state.viewport.mouse.x} x ${state.viewport.mouse.y}`)
+			div(`Mouse: ${state.viewport.mouse.x} x ${state.viewport.mouse.y} [${state.viewport.mouse.coords.join(', ')}]`)
 		])
 	])
 ];

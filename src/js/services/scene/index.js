@@ -9,6 +9,8 @@ const THREE = require('three');
 window.THREE = window.THREE || THREE;
 require('three/examples/js/effects/OutlineEffect.js');
 
+const svg2mesh = require('../../util/three/svg2mesh');
+
 // const colladaLoader = require('../../util/three/loader/collada.js');
 
 const time = require('../../util/time.js');
@@ -57,6 +59,8 @@ const init = ({canvas, state}) => {
 	let {grid, mirror} = _grid.init({scene, state, width, height});
 	let viruses = _viruses.init({scene, state});
 
+	let raycaster = new THREE.Raycaster();
+
 	let renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(width, height);
@@ -68,10 +72,12 @@ const init = ({canvas, state}) => {
 	canvas.innerHTML = '';
 	canvas.appendChild(renderer.domElement);
 
-	return {scene, light: dirLight, renderer, camera, canvas: renderer.domElement, viruses, effect, grid, mirror};
+	return {scene, light: dirLight, renderer, camera, raycaster, canvas: renderer.domElement, viruses, effect, grid, mirror};
 };
 
-const render = ({viruses, scene, camera, renderer, state, effect, grid, mirror}) => {
+const calcOrigin = gridSize => (-8 - (gridSize / 2 - 1) * 8);
+
+const render = ({state, actions, scene, viruses, camera, renderer, raycaster, effect, grid, mirror}) => {
 	if (!scene) return;
 	// console.log(items);
 	if (viruses) {
@@ -79,6 +85,47 @@ const render = ({viruses, scene, camera, renderer, state, effect, grid, mirror})
 	}
 	camera = _camera.refresh({camera, state});
 	grid = _grid.render({grid, mirror, state, scene});
+
+	svg2mesh.convert('assets/icons/virus-attack.svg')
+		.subscribe(geometry => {
+			let specularColor = new THREE.Color(0.8, 0.8, 0.8);
+			let specularShininess = Math.pow(2, 1);
+			let diffuseColor = new THREE.Color().setHSL(1,
+				0,
+				0.7
+				// gamma * 0.5 + 0.1).multiplyScalar(1 - beta * 0.2
+			);
+			let material = new THREE.MeshToonMaterial({
+				color: diffuseColor,
+				specular: specularColor,
+				reflectivity: 8,
+				shininess: specularShininess,
+				side: THREE.DoubleSide
+			});
+			const mesh = new THREE.Mesh(geometry, material);
+			mesh.position.set(0, 0.5, 0);
+			mesh.scale.set(3.5, 3.5, 3.5);
+			mesh.rotateX(Math.PI / 2);
+			scene.add(mesh);
+			console.log(geometry);
+		});
+
+	// raycaster
+	raycaster.setFromCamera(new THREE.Vector2().copy({
+		x: (state.viewport.mouse.x / state.viewport.screen.width) * 2 - 1,
+		y: -(state.viewport.mouse.y / state.viewport.screen.height) * 2 + 1
+	}), camera);
+	let intersection = raycaster.intersectObject(grid);
+	if (intersection[0] && intersection[0].point) {
+		actions.set(['viewport', 'mouse', 'coords'], [
+			parseInt((intersection[0].point.x - calcOrigin(state.gameSettings.gridSize)) / 8, 10),
+			parseInt((intersection[0].point.z - calcOrigin(state.gameSettings.gridSize)) / 8, 10)
+		]);
+	} else {
+		actions.set(['viewport', 'mouse', 'coords'], []);
+	}
+
+	// console.log(new THREE.Vector2().copy(state.viewport.mouse), {intersection});
 
 	renderer.setSize(state.viewport.screen.width, state.viewport.screen.height);
 	// renderer.setFaceCulling(0);
@@ -140,7 +187,7 @@ let hook = ({state$, actions}) => {
 				state$,
 				(dt, sceneState, state) => ({...sceneState, state})
 			)
-			.subscribe(render)
+			.subscribe(data => render({...data, actions}))
 	);
 
 	subs.push(
