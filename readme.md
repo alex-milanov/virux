@@ -1,8 +1,11 @@
 # Virux
+
+## Setup and run
+
 ```sh
 npm i && npm start
 ```
-# Virux
+
 Games AI Task 4: Cooperative Game
 
 # Short description:

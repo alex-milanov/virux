@@ -66,14 +66,20 @@ if (module.hot) {
 // actions -> state
 actions$
 	.map(action => (
-		action.path && console.log(action.path.join('.'), action.payload),
-		console.log(action),
+		action.path && (
+			action.path[0] !== 'viewport'
+			&& !(action.path.join('.') === 'set' && action.payload[0][0] === 'viewport')
+		) && console.log(action.path.join('.'), action.payload, action),
 		action
 	))
 	.startWith(() => actions.initial)
 	.scan((state, change) => change(state), {})
-	.map(state => (console.log(state), state))
+	// .map(state => (console.log(state), state))
 	.subscribe(state => state$.onNext(state));
+
+// log only game state
+state$.distinctUntilChanged(state => state.game)
+	.subscribe(state => console.log(state));
 
 // services
 scene.hook({state$, actions});

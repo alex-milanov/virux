@@ -6,6 +6,7 @@ const $ = Rx.Observable;
 
 const {fn, obj} = require('iblokz-data');
 const time = require('../../util/time.js');
+const gridUtil = require('../../util/three/grid.js');
 
 // initial
 const initial = {
@@ -49,22 +50,6 @@ const initial = {
 // 	[false, {}, {}]
 // ];
 
-const traverse = (mtrx, cb) => mtrx.map((row, y) =>
-	row.map((cell, x) => cb({x, y}, cell))
-);
-
-const getArea = (grid, pos, radius = 1) => fn.pipe(
-	() => new Array(radius * 2 + 1).fill(new Array(radius * 2 + 1).fill({})),
-	area => traverse(area, ({x, y}) =>
-		grid[pos.y - radius + y] && grid[pos.y - radius + y][pos.x - radius + x] || false)
-)();
-
-const filter = (mtrx, f) => {
-	let arr = [];
-	traverse(mtrx, (pos, cell) => f(pos, cell) ? arr.push({pos, cell}) : false);
-	return arr;
-};
-
 const random = arr => arr[Math.floor(Math.random() * arr.length)];
 
 const basicCell = {
@@ -77,7 +62,7 @@ const basicCell = {
 };
 
 const fillGrid = (data, grid, center, radius = 1) => {
-	let emptyCells = filter(grid, (pos, cell) =>
+	let emptyCells = gridUtil.filter(grid, (pos, cell) =>
 		(pos.x >= center - radius && pos.x <= center + radius)
 		&& (pos.y >= center - radius && pos.y <= center + radius)
 		&& cell && !cell.side);
@@ -87,22 +72,23 @@ const fillGrid = (data, grid, center, radius = 1) => {
 };
 
 const reset = () => state => obj.patch(state, ['game', 'grid'], fn.pipe(
-	() => (new Array(state.gameSettings.gridSize)
-		.fill({}).map(() => new Array(state.gameSettings.gridSize).fill({}))),
+	() => gridUtil.generate(state.gameSettings.gridSize),
 	grid => {
 		let maxRange = state.gameSettings.gridSize - 1;
 		if (state.gameSettings.scatter) {
-			let scatterRadius = state.gameSettings.scatterRadius;
-			let whiteCells = new Array(state.gameSettings.startingCells).fill({}).map(() => Object.assign({}, basicCell, {
+			// scattered cells
+			let {scatterRadius, startingCells} = state.gameSettings;
+			let whiteCells = new Array(startingCells).fill({}).map(() => Object.assign({}, basicCell, {
 				side: 0
 			}));
-			let blackCells = new Array(state.gameSettings.startingCells).fill({}).map(() => Object.assign({}, basicCell, {
+			let blackCells = new Array(startingCells).fill({}).map(() => Object.assign({}, basicCell, {
 				side: 1
 			}));
-
+			// fill the grid in area
 			whiteCells.forEach(cell => fillGrid(cell, grid, scatterRadius, scatterRadius));
 			blackCells.forEach(cell => fillGrid(cell, grid, maxRange - scatterRadius, scatterRadius));
 		} else {
+			// default case
 			grid[0][0] = Object.assign({}, basicCell, {
 				side: 0
 			});
@@ -125,14 +111,12 @@ const maxLevel = 8;
 const frameCount = 16;
 
 const updateStatus = (cell, pos, area, targets) => {
-	let status = cell.status;
+	let {status, level, frame} = cell;
 	let target = false;
-	let level = cell.level;
-	let frame = cell.frame;
-	let emptyCells = filter(area, (p, c) => c !== false && c.side === undefined
+	let emptyCells = gridUtil.filter(area, (p, c) => c !== false && c.side === undefined
 		&& !targets.find(({pos}) => pos.x === p.x && pos.y === p.y)
 	);
-	let enemyCells = filter(area, (p, c) => c && c.side !== undefined && c.side !== cell.side
+	let enemyCells = gridUtil.filter(area, (p, c) => c && c.side !== undefined && c.side !== cell.side
 		&& !targets.find(({pos}) => pos.x === p.x && pos.y === p.y)
 	);
 	// console.log(area, emptyCells, enemyCells, targets);
@@ -185,9 +169,9 @@ const updateStatus = (cell, pos, area, targets) => {
 const loop = ({state}) => {
 	const {grid, sides, side} = state.game;
 	let targets = [];
-	let newGrid = traverse(grid, (pos, cell) => {
+	let newGrid = gridUtil.traverse(grid, (pos, cell) => {
 		if (cell.side !== undefined && cell.side === side) {
-			let newCell = updateStatus(cell, pos, getArea(grid, pos), targets);
+			let newCell = updateStatus(cell, pos, gridUtil.getArea(grid, pos), targets);
 			// console.log(cell, newCell);
 			if (newCell.target) targets.push({pos: newCell.target, cell: newCell, origin: pos});
 			return newCell;

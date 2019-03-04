@@ -9,7 +9,8 @@ const THREE = require('three');
 window.THREE = window.THREE || THREE;
 
 const {obj, fn} = require('iblokz-data');
-const {perlin3} = require('../../util/perlin.js');
+const {perlin3} = require('../../util/three/perlin.js');
+const gridUtil = require('../../util/three/grid.js');
 
 const inBetween = (a, b, percentage) => {
 	let pointA = new THREE.Vector3().copy(a);
@@ -30,12 +31,10 @@ const moveTo = (a, b, step) => {
 	return pointA.clone().add(dir);
 };
 
-const calcOrigin = gridSize => (-4 - (gridSize / 2 - 1) * 8);
-
-const create = (scene, pos, cell, gridSize = 8) => {
-	let origin = calcOrigin(gridSize);
+const create = (scene, pos, cell, gridSize = 8, cellSegments = 32) => {
+	let origin = gridUtil.calcOrigin(gridSize) + 4;
 	console.log('creating', pos, cell);
-	let sphereGeometry = new THREE.SphereGeometry(8, 32, 32);
+	let sphereGeometry = new THREE.SphereGeometry(8, cellSegments, cellSegments);
 	const alpha = 0.3; // cell.side === 0 ? 0 : 1;
 	const beta = 0.3;
 	const gamma = 1;
@@ -69,7 +68,7 @@ const create = (scene, pos, cell, gridSize = 8) => {
 };
 
 const update = (virus, pos, cell, gridSize = 8) => {
-	let origin = calcOrigin(gridSize);
+	let origin = gridUtil.calcOrigin(gridSize) + 4;
 	if (cell.status === 'new') {
 		console.log(virus.position);
 		virus.position.copy(inBetween({
@@ -97,27 +96,25 @@ const remove = (virus, scene) => {
 	return {};
 };
 
-const traverse = (mtrx, cb) => mtrx.map((row, y) =>
-	row.map((cell, x) => cb({x, y}, cell))
-);
-
 const init = ({state, scene}) => {
-	let viruses = traverse(state.game.grid,
-		(pos, cell) => cell.side !== undefined ? create(scene, pos, cell, state.game.grid.length) : cell
+	let viruses = gridUtil.traverse(state.game.grid,
+		(pos, cell) => cell.side !== undefined
+			? create(scene, pos, cell, state.game.grid.length, state.gameSettings.cellSegments)
+			: cell
 	);
 	return viruses;
 };
 
 const refresh = ({state, scene, viruses}) => {
 	// remove unneeded
-	viruses = traverse(viruses, fn.pipe(
+	viruses = gridUtil.traverse(viruses, fn.pipe(
 		(pos, virus) => virus instanceof THREE.Mesh
 			&& state.game.grid[pos.y] && state.game.grid[pos.y][pos.x] && state.game.grid[pos.y][pos.x].side !== undefined
 				? virus
 				: remove(virus, scene)
 	));
 	// reset stuff
-	viruses = traverse(state.game.grid, fn.pipe(
+	viruses = gridUtil.traverse(state.game.grid, fn.pipe(
 		(pos, cell) => (viruses[pos.y] && viruses[pos.y][pos.x])
 			? {pos, virus: viruses[pos.y][pos.x]}
 			: {pos, virus: {}},
@@ -126,14 +123,14 @@ const refresh = ({state, scene, viruses}) => {
 				? remove(virus, scene)
 				: update(virus, pos, state.game.grid[pos.y][pos.x], state.game.grid.length)
 			: state.game.grid[pos.y][pos.x].side !== undefined
-				? create(scene, pos, state.game.grid[pos.y][pos.x], state.game.grid.length)
+				? create(scene, pos, state.game.grid[pos.y][pos.x], state.game.grid.length, state.gameSettings.cellSegments)
 				: virus
 	));
 	return viruses;
 };
 
 const render = ({state, scene, viruses}) => {
-	viruses = traverse(viruses,
+	viruses = gridUtil.traverse(viruses,
 		(pos, virus) => {
 			const cell = state.game.grid[pos.y][pos.x];
 			if (virus instanceof THREE.Mesh) {

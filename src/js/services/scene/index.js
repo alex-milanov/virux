@@ -4,19 +4,20 @@
 const Rx = require('rx');
 const $ = Rx.Observable;
 
+const {obj, fn} = require('iblokz-data');
+
 // threejs
 const THREE = require('three');
 window.THREE = window.THREE || THREE;
 require('three/examples/js/effects/OutlineEffect.js');
 
 const svg2mesh = require('../../util/three/svg2mesh');
+const {perlin3} = require('../../util/three/perlin.js');
+const gridUtil = require('../../util/three/grid.js');
 
 // const colladaLoader = require('../../util/three/loader/collada.js');
 
 const time = require('../../util/time.js');
-const {perlin3} = require('../../util/perlin.js');
-
-const {obj, fn} = require('iblokz-data');
 
 const _camera = require('./camera');
 const _grid = require('./grid');
@@ -59,33 +60,6 @@ const init = ({canvas, state}) => {
 	let {grid, mirror} = _grid.init({scene, state, width, height});
 	let viruses = _viruses.init({scene, state});
 
-	let raycaster = new THREE.Raycaster();
-
-	let renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
-	renderer.setPixelRatio(window.devicePixelRatio);
-	renderer.setSize(width, height);
-	renderer.shadowMap.enabled = true;
-	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-	let effect = new THREE.OutlineEffect(renderer);
-
-	canvas.innerHTML = '';
-	canvas.appendChild(renderer.domElement);
-
-	return {scene, light: dirLight, renderer, camera, raycaster, canvas: renderer.domElement, viruses, effect, grid, mirror};
-};
-
-const calcOrigin = gridSize => (-8 - (gridSize / 2 - 1) * 8);
-
-const render = ({state, actions, scene, viruses, camera, renderer, raycaster, effect, grid, mirror}) => {
-	if (!scene) return;
-	// console.log(items);
-	if (viruses) {
-		viruses = _viruses.render({state, scene, viruses});
-	}
-	camera = _camera.refresh({camera, state});
-	grid = _grid.render({grid, mirror, state, scene});
-
 	svg2mesh.convert('assets/icons/virus-attack.svg')
 		.subscribe(geometry => {
 			let specularColor = new THREE.Color(0.8, 0.8, 0.8);
@@ -110,6 +84,31 @@ const render = ({state, actions, scene, viruses, camera, renderer, raycaster, ef
 			console.log(geometry);
 		});
 
+	let raycaster = new THREE.Raycaster();
+
+	let renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+	renderer.setPixelRatio(window.devicePixelRatio);
+	renderer.setSize(width, height);
+	renderer.shadowMap.enabled = true;
+	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+	let effect = new THREE.OutlineEffect(renderer);
+
+	canvas.innerHTML = '';
+	canvas.appendChild(renderer.domElement);
+
+	return {scene, light: dirLight, renderer, camera, raycaster, canvas: renderer.domElement, viruses, effect, grid, mirror};
+};
+
+const render = ({state, actions, scene, viruses, camera, renderer, raycaster, effect, grid, mirror}) => {
+	if (!scene) return;
+	// console.log(items);
+	if (viruses) {
+		viruses = _viruses.render({state, scene, viruses});
+	}
+	camera = _camera.refresh({camera, state});
+	grid = _grid.render({grid, mirror, state, scene});
+
 	// raycaster
 	raycaster.setFromCamera(new THREE.Vector2().copy({
 		x: (state.viewport.mouse.x / state.viewport.screen.width) * 2 - 1,
@@ -117,9 +116,10 @@ const render = ({state, actions, scene, viruses, camera, renderer, raycaster, ef
 	}), camera);
 	let intersection = raycaster.intersectObject(grid);
 	if (intersection[0] && intersection[0].point) {
+		const origin = gridUtil.calcOrigin(state.game.grid.length);
 		actions.set(['viewport', 'mouse', 'coords'], [
-			parseInt((intersection[0].point.x - calcOrigin(state.gameSettings.gridSize)) / 8, 10),
-			parseInt((intersection[0].point.z - calcOrigin(state.gameSettings.gridSize)) / 8, 10)
+			parseInt((intersection[0].point.x - origin) / 8, 10),
+			parseInt((intersection[0].point.z - origin) / 8, 10)
 		]);
 	} else {
 		actions.set(['viewport', 'mouse', 'coords'], []);
@@ -148,7 +148,7 @@ let hook = ({state$, actions}) => {
 	const viruses$ = state$.distinctUntilChanged(state => state.game.grid)
 		.map(state => sceneState => {
 			let {scene, viruses} = sceneState;
-			console.log(viruses);
+			// console.log(viruses);
 			if (viruses) {
 				viruses = _viruses.refresh({state, scene, viruses});
 			}
@@ -169,13 +169,16 @@ let hook = ({state$, actions}) => {
 			};
 		});
 
-	const sceneState$ = $.merge(
-		init$,
-		viruses$,
-		gridUpdates$
-		// character$,
-		// npcs$
-	)
+	const sceneState$ = init$
+		.flatMap(initSceneReducer =>
+			$.merge(
+				$.just(initSceneReducer),
+				viruses$,
+				gridUpdates$
+				// character$,
+				// npcs$
+			)
+		)
 		.map(reducer => (console.log(reducer), reducer))
 		.scan((sceneState, modify) => modify(sceneState), {});
 
@@ -194,8 +197,10 @@ let hook = ({state$, actions}) => {
 		() => {
 			console.log('cleaning up scene');
 			let cleanupSub = $.just({}).withLatestFrom(sceneState$, (j, sceneState) => sceneState)
-				.subscribe(({renderer}) => {
-					renderer.dispose();
+				.subscribe(sceneState => {
+					console.log('disposing ...', sceneState);
+
+					sceneState.renderer.dispose();
 					cleanupSub.dispose();
 				});
 		}

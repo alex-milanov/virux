@@ -20,6 +20,7 @@ const initial = {
 		cellRadius: 1,
 		speed: 6,
 		startingCells: 3,
+		cellSegments: 32,
 		scatter: false,
 		scatterRadius: 2
 	},
